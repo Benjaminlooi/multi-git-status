@@ -185,6 +185,7 @@ for DIR in "${@:-"."}"; do
     find -L "$DIR" $FIND_OPTS -type d | while read -r PROJ_DIR
     do
         GIT_DIR="$PROJ_DIR/.git"
+        WORK_TREE="$PROJ_DIR"
         GIT_CONF="$PROJ_DIR/.git/config"
 
         # If .git is a file (worktree), resolve it to the actual git directory
@@ -227,11 +228,11 @@ for DIR in "${@:-"."}"; do
 
         # Do a 'git fetch' if requested
         if [ "$DO_FETCH" -eq 1 ]; then
-            git --work-tree "$(dirname "$GIT_DIR")" --git-dir "$GIT_DIR" fetch -q >/dev/null
+            git --work-tree "$WORK_TREE" --git-dir "$GIT_DIR" fetch -q >/dev/null
         fi
 
         # Refresh the index, or we might get wrong results.
-        git --work-tree "$(dirname "$GIT_DIR")" --git-dir "$GIT_DIR" update-index -q --refresh >/dev/null 2>&1
+        git --work-tree "$WORK_TREE" --git-dir "$GIT_DIR" update-index -q --refresh >/dev/null 2>&1
 
         # Get current branch, if "-b" is specified
         if [ "$SHOW_CUR_BRANCH" -eq 1 ]; then
@@ -302,10 +303,10 @@ for DIR in "${@:-"."}"; do
         NEEDS_UPSTREAM_BRANCHES=$(printf "$NEEDS_UPSTREAM_BRANCHES" | sort | uniq | tr '\n' ',' | sed "s/^,\(.*\),$/\1/")
 
         # Find out if there are unstaged, uncommitted or untracked changes
-        UNSTAGED=$(git --work-tree "$(dirname "$GIT_DIR")" --git-dir "$GIT_DIR" diff-index --quiet HEAD -- 2>/dev/null; echo $?)
-        UNCOMMITTED=$(git --work-tree "$(dirname "$GIT_DIR")" --git-dir "$GIT_DIR" diff-files --quiet --ignore-submodules --; echo $?)
-        UNTRACKED=$(git --work-tree "$(dirname "$GIT_DIR")" --git-dir "$GIT_DIR" ls-files --exclude-standard --others)
-        cd "$(dirname "$GIT_DIR")" || exit
+        UNSTAGED=$(git --work-tree "$WORK_TREE" --git-dir "$GIT_DIR" diff-index --quiet HEAD -- 2>/dev/null; echo $?)
+        UNCOMMITTED=$(git --work-tree "$WORK_TREE" --git-dir "$GIT_DIR" diff-files --quiet --ignore-submodules --; echo $?)
+        UNTRACKED=$(git --work-tree "$WORK_TREE" --git-dir "$GIT_DIR" ls-files --exclude-standard --others)
+        cd "$WORK_TREE" || exit
         STASHES=$(git stash list | wc -l)
         cd "$OLDPWD" || exit
 
